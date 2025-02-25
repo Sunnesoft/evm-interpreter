@@ -81,14 +81,14 @@ contract InterpreterTest is Test {
         uint256 a = 2;
         uint256 b = 1;
 
-        bytes memory setToMem = bytes.concat(encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"); 
+        bytes memory setToMem = bytes.concat(encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3");
 
-        for (uint i = 0; i < 32; i++) {
+        for (uint256 i = 0; i < 32; i++) {
             bytes memory pushba = bytes.concat(encodePush(b), encodePush(a));
 
             bytes memory data = bytes.concat(pushba, hex"03", setToMem);
             bytes memory result = INTERPRETER.call(data);
-            
+
             unchecked {
                 assertEq(abi.decode(result, (uint256)), a - b);
             }
@@ -106,39 +106,39 @@ contract InterpreterTest is Test {
     }
 
     function test_opcodeDup(uint256 a) external view {
-        bytes memory setToMem = bytes.concat(encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"); 
+        bytes memory setToMem = bytes.concat(encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3");
 
-        for (uint i = 1; i < 17; i++) {
-            bytes memory pusha = encodePush(a); 
+        for (uint256 i = 1; i < 17; i++) {
+            bytes memory pusha = encodePush(a);
 
-            for (uint j = 0; j < i; j++) {
+            for (uint256 j = 0; j < i; j++) {
                 uint256 b = a < j ? a : a - j;
                 pusha = bytes.concat(pusha, encodePush(b));
             }
-            
+
             bytes memory data = bytes.concat(pusha, encodeDup(i), setToMem);
             bytes memory result = INTERPRETER.call(data);
-            
+
             unchecked {
                 assertEq(abi.decode(result, (uint256)), a);
             }
         }
-    } 
+    }
 
     function test_opcodeSwap(uint256 a) external view {
-        bytes memory setToMem = bytes.concat(encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"); 
+        bytes memory setToMem = bytes.concat(encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3");
 
-        for (uint i = 1; i < 17; i++) {
-            bytes memory pusha = encodePush(a); 
+        for (uint256 i = 1; i < 17; i++) {
+            bytes memory pusha = encodePush(a);
 
-            for (uint j = 0; j < i; j++) {
+            for (uint256 j = 0; j < i; j++) {
                 uint256 b = a < j ? a : a - j;
                 pusha = bytes.concat(pusha, encodePush(b));
             }
-            
+
             bytes memory data = bytes.concat(pusha, encodeSwap(i), setToMem);
             bytes memory result = INTERPRETER.call(data);
-            
+
             unchecked {
                 assertEq(abi.decode(result, (uint256)), a);
             }
@@ -147,8 +147,14 @@ contract InterpreterTest is Test {
 
     function test_opcodeSdiv(int256 a, int256 b) external view {
         bytes memory data = bytes.concat(
-            encodePush(uint256(b)), encodePush(uint256(a)), 
-            hex"05", encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"
+            encodePush(uint256(b)),
+            encodePush(uint256(a)),
+            hex"05",
+            encodePush(0),
+            hex"52",
+            encodePush(32),
+            encodePush(0),
+            hex"f3"
         );
         bytes memory result = INTERPRETER.call(data);
         uint256 d;
@@ -166,8 +172,14 @@ contract InterpreterTest is Test {
             return;
         }
         bytes memory data = bytes.concat(
-            encodePush(uint256(b)), encodePush(uint256(a)), 
-            hex"04", encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"
+            encodePush(uint256(b)),
+            encodePush(uint256(a)),
+            hex"04",
+            encodePush(0),
+            hex"52",
+            encodePush(32),
+            encodePush(0),
+            hex"f3"
         );
         bytes memory result = INTERPRETER.call(data);
         unchecked {
@@ -179,24 +191,18 @@ contract InterpreterTest is Test {
         vm.expectRevert();
         bytes memory data = hex"21";
         INTERPRETER.call(data);
-    } 
+    }
 
     function test_opcodeEmptyReverted() external {
         vm.expectRevert();
         bytes memory data = bytes.concat(hex"A5", encodePush(32), encodePush(0), hex"f3");
         INTERPRETER.call(data);
-    } 
+    }
 
     function test_opcodeAnd(uint256 a, uint256 b) external view {
         bytes memory data = bytes.concat(
-            encodePush(a), 
-            encodePush(b), 
-            hex"16", 
-            encodePush(0), 
-            hex"52", 
-            encodePush(32), 
-            encodePush(0), 
-            hex"f3");
+            encodePush(a), encodePush(b), hex"16", encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"
+        );
 
         bytes memory result = INTERPRETER.call(data);
         unchecked {
@@ -206,14 +212,8 @@ contract InterpreterTest is Test {
 
     function test_opcodeLt(uint256 a, uint256 b) external view {
         bytes memory data = bytes.concat(
-            encodePush(a), 
-            encodePush(b), 
-            hex"10", 
-            encodePush(0), 
-            hex"52", 
-            encodePush(32), 
-            encodePush(0), 
-            hex"f3");
+            encodePush(a), encodePush(b), hex"10", encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"
+        );
 
         bytes memory result = INTERPRETER.call(data);
         unchecked {
@@ -223,14 +223,8 @@ contract InterpreterTest is Test {
 
     function test_opcodeGt(uint256 a, uint256 b) external view {
         bytes memory data = bytes.concat(
-            encodePush(a), 
-            encodePush(b), 
-            hex"11", 
-            encodePush(0), 
-            hex"52", 
-            encodePush(32), 
-            encodePush(0), 
-            hex"f3");
+            encodePush(a), encodePush(b), hex"11", encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"
+        );
 
         bytes memory result = INTERPRETER.call(data);
         unchecked {
@@ -240,14 +234,8 @@ contract InterpreterTest is Test {
 
     function test_opcodeShr(uint256 a, uint8 b) external view {
         bytes memory data = bytes.concat(
-            encodePush(a), 
-            encodePush(b), 
-            hex"1C", 
-            encodePush(0), 
-            hex"52", 
-            encodePush(32), 
-            encodePush(0), 
-            hex"f3");
+            encodePush(a), encodePush(b), hex"1C", encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"
+        );
 
         bytes memory result = INTERPRETER.call(data);
         unchecked {
@@ -257,14 +245,8 @@ contract InterpreterTest is Test {
 
     function test_opcodeEq(uint256 a, uint256 b) external view {
         bytes memory data = bytes.concat(
-            encodePush(a), 
-            encodePush(b), 
-            hex"14", 
-            encodePush(0), 
-            hex"52", 
-            encodePush(32), 
-            encodePush(0), 
-            hex"f3");
+            encodePush(a), encodePush(b), hex"14", encodePush(0), hex"52", encodePush(32), encodePush(0), hex"f3"
+        );
 
         bytes memory result = INTERPRETER.call(data);
         unchecked {
@@ -277,15 +259,12 @@ contract InterpreterTest is Test {
             a++;
         }
 
-        bytes memory data = bytes.concat(
-            encodePush(a),
-            hex"60075660115b5f5260205ff3"
-        );
+        bytes memory data = bytes.concat(encodePush(a), hex"60075660115b5f5260205ff3");
         console.logBytes(data);
         bytes memory result = INTERPRETER.call(data);
         unchecked {
             assertEq(abi.decode(result, (uint256)), a);
-        } 
+        }
     }
 
     function test_opcodeJumpAndJumpi(uint8 a) external view {
@@ -293,11 +272,8 @@ contract InterpreterTest is Test {
             a++;
         }
 
-        bytes memory data = bytes.concat(
-            encodePush(0x10),
-            encodePush(a),
-            hex"5b601014601257601160106004565b5f5260205ff3"
-        );
+        bytes memory data =
+            bytes.concat(encodePush(0x10), encodePush(a), hex"5b601014601257601160106004565b5f5260205ff3");
         bytes memory result = INTERPRETER.call(data);
         unchecked {
             assertEq(abi.decode(result, (uint256)), a == 0x10 ? 0x10 : 0x11);
@@ -309,11 +285,7 @@ contract InterpreterTest is Test {
             a++;
         }
 
-        bytes memory data = bytes.concat(
-            encodePush(0x10),
-            encodePush(a),
-            hex"600114600c5760115b5f5260205ff3"
-        );
+        bytes memory data = bytes.concat(encodePush(0x10), encodePush(a), hex"600114600c5760115b5f5260205ff3");
         console.logBytes(data);
         bytes memory result = INTERPRETER.call(data);
         unchecked {
@@ -321,7 +293,7 @@ contract InterpreterTest is Test {
         }
     }
 
-    function gcd(uint256 a, uint256 b) private pure returns(uint256) {
+    function gcd(uint256 a, uint256 b) private pure returns (uint256) {
         while (b != 0) {
             uint256 t = b;
             b = a % b;
@@ -332,7 +304,7 @@ contract InterpreterTest is Test {
     }
 
     /// @notice GCD Naive implementation
-    /// @dev 
+    /// @dev
     /// PUSHN a
     /// PUSHN b
     /// JUMPDEST
@@ -353,19 +325,19 @@ contract InterpreterTest is Test {
     /// PUSH0
     /// RETURN
     function test_gcd() external view {
-        assertEq(gcd(2,4), 2);
-        assertEq(gcd(6,14), 2);
-        assertEq(gcd(1,5), 1);
+        assertEq(gcd(2, 4), 2);
+        assertEq(gcd(6, 14), 2);
+        assertEq(gcd(1, 5), 1);
 
         uint256[3] memory a = [uint256(2), 6, 1];
         uint256[3] memory b = [uint256(4), 14, 5];
 
-        for (uint i = 0; i < a.length; i++) {
-            bytes memory data = bytes.concat(
-                encodePush(a[i]), encodePush(b[i]), hex"5b80156010578091066004565b905f5260205ff3");
+        for (uint256 i = 0; i < a.length; i++) {
+            bytes memory data =
+                bytes.concat(encodePush(a[i]), encodePush(b[i]), hex"5b80156010578091066004565b905f5260205ff3");
 
             bytes memory result = INTERPRETER.call(data);
-            
+
             unchecked {
                 assertEq(abi.decode(result, (uint256)), gcd(a[i], b[i]));
             }
@@ -375,12 +347,12 @@ contract InterpreterTest is Test {
     /// @notice Returns the index of least significant bit
     /// @param x the value for which to compute the most significant bit
     /// @return r the index of least significant bit from 0 to 255
-    function binarySearchLsb(uint256 x) private pure returns(uint8 r) {
+    function binarySearchLsb(uint256 x) private pure returns (uint8 r) {
         r = 255;
         uint256 mask = 0xffffffffffffffffffffffffffffffff;
         uint8 k = 128;
 
-        for (uint i = 0; i < 8; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             if (x & mask > 0) {
                 r -= k;
             } else {
@@ -392,7 +364,7 @@ contract InterpreterTest is Test {
         }
     }
 
-    /// @dev 
+    /// @dev
     /// PUSH1 0xa1
     /// PUSH1 0xff
     /// PUSH1 0x80
@@ -445,11 +417,12 @@ contract InterpreterTest is Test {
             uint256 a = 1 << i;
 
             bytes memory data = bytes.concat(
-                encodePush(a), 
-                hex"60ff60806fffffffffffffffffffffffffffffffff5b8084165f1060285792811c9291602d565b819092035b90600290048092901c909190815f10601757915f5260205ff3");
+                encodePush(a),
+                hex"60ff60806fffffffffffffffffffffffffffffffff5b8084165f1060285792811c9291602d565b819092035b90600290048092901c909190815f10601757915f5260205ff3"
+            );
 
             bytes memory result = INTERPRETER.call(data);
-            
+
             unchecked {
                 assertEq(abi.decode(result, (uint256)), binarySearchLsb(a));
             }
