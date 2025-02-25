@@ -16,80 +16,83 @@ JUMPDEST // STOP 0x00
 
 // Setup
 // We use the memory size to know if this is a setup, or the STOP opcode being executed.
-MSIZE
-ISZERO
-PUSH2 0x0e // JUMP to setup
-JUMPI
-CALLDATASIZE // calldatasize < pc
-LT
-PUSH2 0x1fc0 // JUMP to INVALID
-JUMPI
-STOP
-JUMPDEST
+MSIZE                                       // Stack: [msize]
+ISZERO                                      // Stack: [msize == 0 ? 1 : 0]
+PUSH2 0x0e // JUMP to setup                 // Stack: [0x0e, msize == 0 ? 1 : 0]
+JUMPI                                       // if stack(0) == 1 then jump to [PC 0x0e]
+CALLDATASIZE // calldatasize < pc           // Stack: [calldatasize]
+LT                                          // Stack: [calldatasize < pc ? 1 : 0]
+PUSH2 0x1fc0 // JUMP to INVALID             // Stack: [0x1fc0, calldatasize < pc ? 1 : 0]
+JUMPI                                       // if stack(0) == 1 then jump to [PC 0x1fc0]
+STOP                                        // halts execution when stack(0) == 0
+JUMPDEST                                    // [PC 0x0e]
 // Set MSIZE to 32
-PUSH0
-PUSH0
-MSTORE
-PUSH0 // PC
+PUSH0                                       // Stack: [0]
+PUSH0                                       // Stack: [0, 0]
+MSTORE                                      // Stack: [], Memory: [0x0: 0]
+PUSH0 // PC                                 // Stack: [0]
 
 // Load next opcode
-JUMPDEST
-DUP1
-CALLDATALOAD
-PUSH0
-BYTE
-PUSH5 5
-SHL
-JUMP
+JUMPDEST                                    // 
+DUP1                                        // Stack: [0, 0]
+CALLDATALOAD                                // Stack: [calldata[0:0x20], 0]
+PUSH0                                       // Stack: [0, calldata[0:0x20], 0]
+BYTE                                        // Stack: [calldata[0:0x1], 0]
+// shift OPCODE from calldata by five digits == OPCODE x 0x20 for bringing into line with the program counter
+// (omit setup and load sections, all JUMPDEST below aligned by 0x20 bytes)
+PUSH5 5                                     // Stack: [5, calldata[0:0x1], 0] // PUSH5 instead PUSH1 for align the code according to PC coding rule
+SHL                                         // Stack: [calldata[0:0x1] << 5, 0]
+JUMP                                        // Stack: [0], jump to PC
 
 // ADD 0x01
 JUMPDEST
-PUSH18 1
-ADD
-SWAP2
-ADD
-SWAP1
+PUSH18 1                                    // Stack: [1, j, b, a] <- a and b must be put to stack before ADD opcode, 
+// where j is calldata's offset, i = j + 1
+ADD                                         // Stack: [i, b, a]
+SWAP2                                       // Stack: [a, b, i]
+ADD                                         // Stack: [a + b, i]
+SWAP1                                       // Stack: [i, a + b]
 
-DUP1
-CALLDATALOAD
-PUSH0
-BYTE
-PUSH1 5
-SHL
-JUMP
+DUP1                                        // Stack: [i, i, a + b]
+CALLDATALOAD                                // Stack: [calldata[i:i + 0x20], i, a + b]
+PUSH0                                       // Stack: [0, calldata[i, i + 0x20], i, a + b]
+BYTE                                        // Stack: [calldata[i:i + 0x1], i, a + b]
+PUSH1 5                                     // Stack: [5, calldata[i:i + 0x1], i, a + b]
+SHL                                         // Stack: [calldata[i:i + 0x1] << 5, i, a + b]
+JUMP                                        // Stack: [i, a + b], jump to next PC
 
 // MUL 0x02
-JUMPDEST
-PUSH18 1
-ADD
-SWAP2
-MUL
-SWAP1
+JUMPDEST                                    // 
+PUSH18 1                                    // Stack: [1, j, b, a]
+ADD                                         // Stack: [i, b, a] i == j + 1
+SWAP2                                       // Stack: [a, b, i]
+MUL                                         // Stack: [a x b, i]
+SWAP1                                       // Stack: [i, a x b]
 
-DUP1
-CALLDATALOAD
-PUSH0
-BYTE
-PUSH1 5
-SHL
-JUMP
+DUP1                                        // Stack: [i, i, a x b]
+CALLDATALOAD                                // Stack: [calldata[i:i+0x20], i, a x b]
+PUSH0                                       // Stack: [0, calldata[i:i+0x20], i, a x b]
+BYTE                                        // Stack: [calldata[i: i + 0x1], i, a x b]
+PUSH1 5                                     // Stack: [5, calldata[i: i + 0x1], i, a x b]
+SHL                                         // Stack: [calldata[i: i + 0x1] << 5, i, a x b]
+JUMP                                        // Stack: [i, a x b], jump to next PC
 
 // SUB 0x03
-JUMPDEST
-PUSH17 1
-ADD
-SWAP2
-SWAP1
-SUB
-SWAP1
+JUMPDEST                                    //
+PUSH17 1                                    // Stack: [1, j, a, b]
+ADD                                         // Stack: [i, a, b] i == j + 1
+SWAP2                                       // Stack: [b, a, i]
+SWAP1                                       // Stack: [a, b, i]
+SUB                                         // Stack: [a - b, i]
+SWAP1                                       // Stack: [i, a - b]
 
-DUP1
-CALLDATALOAD
-PUSH0
-BYTE
-PUSH1 5
-SHL
-JUMP
+DUP1                                        // Stack: [i, i, a - b]
+CALLDATALOAD                                // Stack: [calldata[i:i+0x20], i, a - b]
+PUSH0                                       // Stack: [0, calldata[i:i+0x20], i, a - b]
+BYTE                                        // Stack: [calldata[i: i + 0x1], i, a - b]
+PUSH1 5                                     // Stack: [5, calldata[i: i + 0x1], i, a - b]
+SHL                                         // Stack: [calldata[i: i + 0x1] << 5, i, a - b]
+JUMP                                        // Stack: [i, a - b], kump to next PC
 
 // DIV 0x04
 JUMPDEST
@@ -114,7 +117,7 @@ PUSH17 1
 ADD
 SWAP2
 SWAP1
-DIV
+SDIV                                          // [CRITICAL ISSUE] MUST BE SDIV
 SWAP1
 
 DUP1
@@ -234,12 +237,12 @@ PUSH31 0
 PUSH31 0
 
 // LT 0x10
-JUMPDEST
-PUSH18 1
-ADD
-SWAP2
-GT
-SWAP1
+JUMPDEST                                    
+PUSH18 1                                    // Stack: [1, j, a, b]
+ADD                                         // Stack: [i, a, b] i == j + 1
+SWAP2                                       // Stack: [b, a, i] 
+GT                                          // Stack: [b > a ? 1 : 0, i]
+SWAP1                                       // Stack: [i, b > a ? 1 : 0]
 
 DUP1
 CALLDATALOAD
@@ -250,12 +253,12 @@ SHL
 JUMP
 
 // GT 0x11
-JUMPDEST
-PUSH18 1
-ADD
-SWAP2
-LT
-SWAP1
+JUMPDEST                                    
+PUSH18 1                                    // Stack: [1, j, a, b]
+ADD                                         // Stack: [i, a, b] i == j + 1
+SWAP2                                       // Stack: [b, a, i] 
+LT                                          // Stack: [b < a ? 1 : 0, i]
+SWAP1                                       // Stack: [i, b < a ? 1 : 0]
 
 DUP1
 CALLDATALOAD
@@ -267,10 +270,10 @@ JUMP
 
 // SLT 0x12
 JUMPDEST
-PUSH18 1
+PUSH18 1                                    // Stack: [1, j, a, b]
 ADD
 SWAP2
-SGT
+SGT                                         // Stack: [b > a ? 1 : 0, i]
 SWAP1
 
 DUP1
@@ -282,11 +285,11 @@ SHL
 JUMP
 
 // SGT 0x13
-JUMPDEST
-PUSH18 1
+JUMPDEST                                    
+PUSH18 1                                    // Stack: [1, j, a, b]
 ADD
 SWAP2
-SLT
+SLT                                         // Stack: [b < a ? 1 : 0, i]
 SWAP1
 
 DUP1
@@ -299,10 +302,10 @@ JUMP
 
 // EQ 0x14
 JUMPDEST
-PUSH18 1
-ADD
-SWAP2
-EQ
+PUSH18 1                                    // Stack: [1, j, b, a]
+ADD                                         // Stack: [i, b, a] i == j + 1
+SWAP2                                       // Stack: [a, b, i]
+EQ                                          // Stack: [a == b ? 1 : 0, i]
 SWAP1
 
 DUP1
@@ -315,10 +318,10 @@ JUMP
 
 // ISZERO 0x15
 JUMPDEST
-PUSH18 1
-ADD
-SWAP1
-ISZERO
+PUSH18 1                                    // Stack: [1, j, a]
+ADD                                         // Stack: [i, a] i == j + 1
+SWAP1                                       // Stack: [a, i]
+ISZERO                                      // Stack: [a == 0 ? 1 : 0, i]
 SWAP1
 
 DUP1
@@ -361,7 +364,7 @@ PUSH1 5
 SHL
 JUMP
 
-// OR 0x18
+// XOR 0x18
 JUMPDEST
 PUSH18 1
 ADD
@@ -395,12 +398,12 @@ JUMP
 
 // BYTE 0x1A
 JUMPDEST
-PUSH17 1
-ADD
-SWAP2
-SWAP1
-BYTE
-SWAP1
+PUSH17 1                                    // Stack: [1, j, i, x]
+ADD                                         // Stack: [k, i, x] k = 1 +j
+SWAP2                                       // Stack: [x, i, k]
+SWAP1                                       // Stack: [i, x, k]
+BYTE                                        // Stack: [x[i:i+0x1], k]
+SWAP1                                       // Stack: [k, x[i:i+0x1]]
 
 DUP1
 CALLDATALOAD
@@ -444,7 +447,7 @@ PUSH1 5
 SHL
 JUMP
 
-// SHR 0x1D
+// SAR 0x1D
 JUMPDEST
 PUSH17 1
 ADD
@@ -475,12 +478,12 @@ PUSH28 0
 
 // KECCAK256 0x20
 JUMPDEST
-PUSH17 1
-ADD
-SWAP2
-SWAP1
-KECCAK256
-SWAP1
+PUSH17 1                                    // Stack: [1, j, offset, size]
+ADD                                         // Stack: [i, offset, size]
+SWAP2                                       // Stack: [size, offset, i]
+SWAP1                                       // Stack: [offset, size, i]
+KECCAK256                                   // Stack: [keccak(offset, size), i]
+SWAP1                                       // Stack: [i, keccak(offset, size)]
 
 DUP1
 CALLDATALOAD
@@ -658,12 +661,12 @@ JUMP
 
 // CALLDATALOAD 0x35
 JUMPDEST
-PUSH18 1
-ADD
-PUSH0
-SWAP2
-// CALLDATALOAD calldata is empty
-POP
+PUSH18 1                                    // Stack: [1, j, i]
+ADD                                         // Stack: [k, i], k = 1 + j
+PUSH0                                       // Stack: [0, k, i]
+SWAP2                                       // Stack: [i, k, 0]
+// CALLDATALOAD calldata is empty           // 
+POP                                         // Stack: [k, 0]
 
 DUP1
 CALLDATALOAD
@@ -675,11 +678,11 @@ JUMP
 
 // CALLDATASIZE 0x36
 JUMPDEST
-PUSH19 1
-ADD
-PUSH0
+PUSH19 1                                    // Stack: [1, i]
+ADD                                         // Stack: [j]
+PUSH0                                       // Stack: [0, j]
 // CALLDATASIZE is empty
-SWAP1
+SWAP1                                       // Stack: [j, 0]
 
 DUP1
 CALLDATALOAD
@@ -691,15 +694,15 @@ JUMP
 
 // CALLDATACOPY 0x37
 JUMPDEST
-PUSH15 1
-ADD
-SWAP3
-SWAP2
+PUSH15 1                                    // Stack: [1, i, destOffset, offset, size]
+ADD                                         // Stack: [j, destOffset, offset, size]
+SWAP3                                       // Stack: [size, destOffset, offset, j]
+SWAP2                                       // Stack: [offset, destOffset, size, j]
 // Copy empty calldata
-POP
-CALLDATASIZE
-SWAP1
-CALLDATACOPY
+POP                                         // Stack: [destOffset, size, j]
+CALLDATASIZE                                // Stack: [calldatasize, destOffset, size, j]
+SWAP1                                       // Stack: [destOffset, calldatasize, size, j]
+CALLDATACOPY                                // Stack: [j], out of bound, fills 0s 
 
 DUP1
 CALLDATALOAD
@@ -727,11 +730,11 @@ JUMP
 
 // CODECOPY 0x39
 JUMPDEST
-PUSH17 1
-ADD
-SWAP3
-SWAP2
-SWAP1
+PUSH17 1                                    // Stack: [1, i, destOffset, offset, size]
+ADD                                         // Stack: [j, destOffset, offset, size]
+SWAP3                                       // Stack: [size, destOffset, offset, j]
+SWAP2                                       // Stack: [offset, destOffset, size, j]
+SWAP1                                       // Stack: [destOffset, offset, size, j]
 // CODECOPY
 CALLDATACOPY // The code is in the calldata
 
@@ -776,12 +779,12 @@ JUMP
 
 // EXTCODECOPY 0x3C
 JUMPDEST
-PUSH16 1
-ADD
-SWAP4
-SWAP3
-SWAP2
-SWAP1
+PUSH16 1                                  // Stack: [1, i, address, destOffset, offset, size]
+ADD                                       // Stack: [j, address, destOffset, offset, size]
+SWAP4                                     // Stack: [size, address, destOffset, offset, j]
+SWAP3                                     // Stack: [offset, address, destOffset, size, j]
+SWAP2                                     // Stack: [destOffset, address, offset, size, j]
+SWAP1                                     // Stack: [address, destOffset, offset, size, j]
 EXTCODECOPY
 
 DUP1
@@ -1054,11 +1057,11 @@ JUMP
 
 // MLOAD 0x51
 JUMPDEST
-PUSH18 1
-ADD
-SWAP1
-MLOAD
-SWAP1
+PUSH18 1                                  // Stack: [1, i, offset]
+ADD                                       // Stack: [j, offset]
+SWAP1                                     // Stack: [offset, j]
+MLOAD                                     // Stack: [val_from_memory_at_offset, j]
+SWAP1                                     // Stack: [j, val_from_memory_at_offset]
 
 DUP1
 CALLDATALOAD
@@ -1134,31 +1137,31 @@ JUMP
 
 // JUMP 0x56
 JUMPDEST
-POP
-DUP1
-PUSH14 1
-ADD
-SWAP1
+POP                                       // Stack: [counter]
+DUP1                                      // Stack: [counter, counter]      
+PUSH14 1                                  // Stack: [1, counter, counter]
+ADD                                       // Stack: [1 + counter, counter]
+SWAP1                                     // Stack: [counter, 1 + counter]
 
-CALLDATALOAD
-PUSH1 0xf0
-SHR
-PUSH2 0x5b00
-XOR
-PUSH1 0x05
-SHL
-JUMP
+CALLDATALOAD                              // Stack: [calldata[counter:counter+0x20], 1 + counter]
+PUSH1 0xf0                                // Stack: [0xf0, calldata[counter:counter+0x20], 1 + counter]
+SHR                                       // Stack: [calldata[counter:counter+0x20] >> 240, 1 + counter]
+PUSH2 0x00ff                              // Stack: [0x00ff, calldata[counter:counter+0x20] >> 240, 1 + counter]
+AND                                       // Stack: [0x00ff & (calldata[counter:counter+0x20] >> 240), 1 + counter]
+PUSH1 0x05                                // Stack: [0x05, 0x00ff & (calldata[counter:counter+0x20] >> 240), 1 + counter]
+SHL                                       // Stack: [(0x00ff & (calldata[counter:counter+0x20] >> 240)) << 0x05, 1 + counter]
+JUMP                                      // Stack: [1 + counter] jump to (0x00ff & (calldata[counter:counter+0x20] >> 240)) << 0x05
 
 // JUMPI 0x57
-JUMPDEST
-SWAP1
-SWAP2
-PUSH14 0x0000000000000000000000000ac0
-JUMPI
-SWAP1
-POP
-PUSH1 0x01
-ADD
+JUMPDEST                                 // Stack: [i, counter, condition]
+SWAP1                                    // Stack: [counter, i, condition]
+SWAP2                                    // Stack: [condition, i, counter]
+PUSH14 0x0000000000000000000000000ac0    // Stack: [0x0000000000000000000000000ac0, condition, i, counter]
+JUMPI                                    // JUMP to 0x56 code
+SWAP1                                    // [counter, i]
+POP                                      // [i]
+PUSH1 0x01                               // [1, i]
+ADD                                      // [i+1]
 
 DUP1
 CALLDATALOAD
@@ -1291,38 +1294,38 @@ JUMP
 
 // PUSH1 0x60
 JUMPDEST
-DUP1
-CALLDATALOAD
-DUP1
-PUSH14 1
-BYTE
-SWAP2
-PUSH1 2
-ADD
-SWAP1
-PUSH1 2
-BYTE
-PUSH1 5
-SHL
+DUP1                                        // [i, i]
+CALLDATALOAD                                // [calldata[i:i+0x20], i]
+DUP1                                        // [calldata[i:i+0x20], calldata[i:i+0x20], i]
+PUSH14 1                                    // [1, calldata[i:i+0x20], calldata[i:i+0x20], i]
+BYTE                                        // [calldata[i+1:i+2], calldata[i:i+0x20], i]
+SWAP2                                       // [i, calldata[i:i+0x20], calldata[i+1:i+2]]
+PUSH1 2                                     // [2, i, calldata[i:i+0x20], calldata[i+1:i+2]]
+ADD                                         // [2 + i, calldata[i:i+0x20], calldata[i+1:i+2]]
+SWAP1                                       // [calldata[i:i+0x20], 2 + i, calldata[i+1:i+2]]
+PUSH1 2                                     // [2, calldata[i+2:i+3], 2 + i, calldata[i+1:i+2]]
+BYTE                                        // [calldata[i+2:i+3], 2 + i, calldata[i+1:i+2]]
+PUSH1 5                                     // [5, calldata[i+2:i+3], 2 + i, calldata[i+1:i+2]]
+SHL                                         // [calldata[i+2:i+3] << 5, 2 + i, calldata[i+1:i+2]]
 JUMP
 
 // PUSH2 0x61
 JUMPDEST
-PUSH11 1
-ADD
-DUP1
-CALLDATALOAD
-DUP1
-PUSH1 240
-SHR
-SWAP2
-PUSH1 2
-ADD
-SWAP1
-PUSH1 2
-BYTE
-PUSH1 5
-SHL
+PUSH11 1                                    // [1, i]
+ADD                                         // [1 + i]
+DUP1                                        // [j, j], j = i + 1
+CALLDATALOAD                                // [calldata[j:j+0x20], j]
+DUP1                                        // [calldata[j:j+0x20], calldata[j:j+0x20], j]
+PUSH1 240                                   // [240, calldata[j:j+0x20], calldata[j:j+0x20], j]
+SHR                                         // [calldata[j:j+2], calldata[j:j+0x20], j] // first 16 bits
+SWAP2                                       // [j, calldata[j:j+0x20], calldata[j:j+2]]
+PUSH1 2                                     // [2, j, calldata[j:j+0x20], calldata[j:j+2]]
+ADD                                         // [j+2, calldata[j:j+0x20], calldata[j:j+2]]
+SWAP1                                       // [calldata[j:j+0x20], j+2, calldata[j:j+2]]
+PUSH1 2                                     // [2, calldata[j:j+0x20], j+2, calldata[j:j+2]]
+BYTE                                        // [calldata[j+2:j+3], j+2, calldata[j:j+2]]
+PUSH1 5                                     // [5, calldata[j+2:j+3], j+2, calldata[j:j+2]]
+SHL                                         // [calldata[j+2:j+3] << 5, j+2, calldata[j:j+2]]
 JUMP
 
 // PUSH3 0x62
@@ -1895,11 +1898,11 @@ SHL
 JUMP
 
 // DUP1 0x80
-JUMPDEST
-PUSH19 1
-ADD
-DUP2
-SWAP1
+JUMPDEST                            // Stack: [i, value]
+PUSH19 1                            // Stack: [1, i, value]
+ADD                                 // Stack: [1 + i, value]
+DUP2                                // Stack: [value, 1 + i, value]
+SWAP1                               // Stack: [1 + i, value, value]
 
 DUP1
 CALLDATALOAD
@@ -1910,11 +1913,11 @@ SHL
 JUMP
 
 // DUP2 0x81
-JUMPDEST
-PUSH19 1
-ADD
-DUP3
-SWAP1
+JUMPDEST                            // Stack: [i, a, b]
+PUSH19 1                            // Stack: [1, i, a, b]
+ADD                                 // Stack: [1 + i, a, b]
+DUP3                                // Stack: [b, 1 + i, a, b]
+SWAP1                               // Stack: [1 + i, b, a, b]
 
 DUP1
 CALLDATALOAD
@@ -2120,21 +2123,21 @@ SHL
 JUMP
 
 // DUP16 0x8F
-JUMPDEST
-PUSH1 1
-ADD
-PUSH1 32
-DUP1
-MSIZE
-SUB
-MLOAD
-ISZERO
-MUL
-MSIZE
-SUB
-MSTORE // Store the pc in MSIZE or MSIZE - 20
-DUP16
-PUSH1 32
+JUMPDEST                                                // Stack: [i, a, b, ...., value]
+PUSH1 1                                                 // Stack: [1, i, a, b, ...., value]
+ADD                                                     // Stack: [1, i, a, b, ...., value]
+PUSH1 32                                                // Stack: [32, 1, i, a, b ... , value]
+DUP1                                                    // Stack: [32, 32, i, a, b ..., value]
+MSIZE                                                   // Stack: [msize, 32, 32, i, a, b ..., value]
+SUB                                                     // Stack: [msize - 32, 32, i, a, b, ..., value]
+MLOAD                                                   // Stack: [memory[msize - 32:msize], 32, i, a, b, ..., value]
+ISZERO                                                  // Stack: [memory[msize - 32:msize] == 0 ? 1 : 0, 32, i, a, b, ..., value]
+MUL                                                     // Stack: [32 or 0, i, a, b, ..., value]
+MSIZE                                                   // Stack: [msize, 32 or 0, i, a, b, ..., value]
+SUB                                                     // Stack: [msize - (32 or 0), i, a, b, ..., value]
+MSTORE // Store the pc in MSIZE or MSIZE - 20           // Stack: [a, b, ..., value], Memory: [msize - (32 or 0):= i]
+DUP16                                                   // Stack: [value, a, b ..., value]
+PUSH1 32                                                // Restore PC from memory
 MSIZE
 SUB
 DUP1
@@ -2505,9 +2508,9 @@ PUSH1 5
 SHL
 JUMP
 
-// GAP
-PUSH31 0
-PUSH31 0
+// GAP                                      // [CRITCAL] What do you think to make this opcodes also INVALID?
+PUSH31 0                                    // for instance, in https://www.evm.codes/playground it's marked as INVALID OPCODE
+PUSH31 0                                    // but here is InvalidJump
 PUSH31 0
 PUSH31 0
 PUSH31 0
@@ -2601,18 +2604,18 @@ SHL
 JUMP
 
 // CALL 0xF1
-JUMPDEST
-PUSH12 1
-ADD
-SWAP7
+JUMPDEST                                // Stack: [i, gas, address, value, argsOffset, argsSize, retOffset, retSize]
+PUSH12 1                                // Stack: [1, i, gas, address, value, argsOffset, argsSize, retOffset, retSize]
+ADD                                     // Stack: [1+i, gas, address, value, argsOffset, argsSize, retOffset, retSize]
+SWAP7                                   
 SWAP6
 SWAP5
 SWAP4
 SWAP3
 SWAP2
-SWAP1
-CALL
-SWAP1
+SWAP1                                   // Stack: [gas, address, value, argsOffset, argsSize, retOffset, retSize, 1+i]
+CALL                                    // Stack: [result: 0 or 1, 1 + i]
+SWAP1                                   // Stack: [1 + i, result: 0 or 1]
 
 DUP1
 CALLDATALOAD
@@ -2646,27 +2649,27 @@ JUMP
 
 // RETURN 0xF3
 JUMPDEST
-POP
-RETURN
+POP                                     // Stack: [offset, size]
+RETURN                                  // Stack: []
 PUSH27 0
 INVALID
 
 // DELEGATECALL 0xF4
-JUMPDEST
-PUSH2 0x1e88 // return ptr
-PUSH2 0x1fec // guard ptr
-JUMP
-JUMPDEST
-PUSH5 1
-ADD
+JUMPDEST                                // Stack: [i, gas, address, argsOffset, argsSize, retOffset, retSize]
+PUSH2 0x1e88 // return ptr              // Stack: [0x1e88, i, gas, address, argsOffset, argsSize, retOffset, retSize]
+PUSH2 0x1fec // guard ptr               // Stack: [0x1fec, 0x1e88, i, gas, address, argsOffset, argsSize, retOffset, retSize]
+JUMP                                    // Stack: [0x1e88, i, gas, address, argsOffset, argsSize, retOffset, retSize]
+JUMPDEST                                // 0x1e88 
+PUSH5 1                                 // Stack: [1, i, gas, address, argsOffset, argsSize, retOffset, retSize]
+ADD                                     // Stack: [1 + i, gas, address, argsOffset, argsSize, retOffset, retSize]
 SWAP6
 SWAP5
 SWAP4
 SWAP3
 SWAP2
-SWAP1
-DELEGATECALL
-SWAP1
+SWAP1                                   // Stack: [gas, address, argsOffset, argsSize, retOffset, retSize, 1 + i]
+DELEGATECALL                            // Stack: [success: return 0 if the sub context reverted, 1 otherwise, 1 + i]
+SWAP1                                   // Stack: [1 + i, success: return 0 if the sub context reverted, 1 otherwise]
 
 DUP1
 CALLDATALOAD
@@ -2695,8 +2698,8 @@ PUSH1 5
 SHL
 JUMP
 
-// GAP
-PUSH31 0
+// GAP                                      // [CRITCAL] What do you think to make this opcodes also INVALID?
+PUSH31 0                                    // for instance, in https://www.evm.codes/playground it's marked as INVALID
 PUSH31 0
 PUSH31 0
 PUSH31 0
@@ -2722,8 +2725,8 @@ PUSH1 5
 SHL
 JUMP
 
-// GAP
-PUSH31 0
+// GAP                                      // [CRITCAL] What do you think to make this opcodes also INVALID?
+PUSH31 0                                    // for instance, in https://www.evm.codes/playground it's marked as INVALID
 PUSH31 0
 
 // REVERT 0xFD
@@ -2734,7 +2737,7 @@ PUSH27 0
 INVALID
 
 // INVALID 0xFE
-JUMPDEST
+JUMPDEST                    // [PC 0x1fc0]
 INVALID
 PUSH29 0
 
@@ -2751,13 +2754,13 @@ STOP
 
 // Guard to prevent an instruction who can potentialy
 // destroy this contract from being executed.
-JUMPDEST
-ADDRESS
+JUMPDEST                                             // 0x1fec Stack: [pc]
+ADDRESS                                              // Stack: [address of executing account, pc]
 // !REPLACE THIS BY THE ADDRESS OF THE CONTRACT!
-PUSH20 0x0000000000000000000000000000000000000000
-EQ
-PUSH2 0x2009
-JUMPI
-JUMP
-JUMPDEST
+PUSH20 0x0000000000000000000000000000000000000000    // Stack: [address of contract, address of executing account, pc]
+EQ                                                   // Stack: [address of contract == address of executing account ? 1 : 0, pc]
+PUSH2 0x2009                                         // Stack: [0x2009, address of contract == address of executing account ? 1 : 0, pc]
+JUMPI                                                // if 1 jump to 0x2009, else to pc
+JUMP                                                 // 
+JUMPDEST                                             // 0x2009
 INVALID
